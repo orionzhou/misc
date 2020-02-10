@@ -1,5 +1,5 @@
 require(tidyverse)
-dirw = '~/data/misc1/trevor_nhej'
+dirw = '/home/springer/zhoux379/projects/misc/trevor_nhej'
 #{{{
 get_longest_del <- function(s)
     str_locate_all(s, "[ATCGN]-+[ATCGN]")[[1]] %>% as_tibble() %>%
