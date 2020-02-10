@@ -4,7 +4,7 @@ logs
 
 # data folder
 trevor_nhej/*
-trevor_nhej/src.R
+!trevor_nhej/src.R
 
 # app temp files
 .snakemake/*
