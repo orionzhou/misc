@@ -21,8 +21,34 @@ max_match_nt <- function(s1, s2, direction=1) {
     cnt
     #}}}
 }
+run_mmej_pipe <- function(pre, diri, diro) {
+    #{{{
+    if(!dir.exists(diro)) system(sprintf("mkdir -p %s", diro))
+    fi = sprintf("%s/%s.txt", diri, pre)
+    ti = read_tsv(fi) %>%
+        rename(aSeq=1,rSeq=2,ref=3,status=4,n_del=5,n_ins=6,n_mut=7,num_reads=8,pct_reads=9)
+    ti2 = ti %>%
+        mutate(dpos = map(aSeq, get_longest_del))
+    #
+    ti3 = ti2 %>% unnest(dpos) %>%
+        mutate(dseq = str_sub(rSeq, start+1, end-1)) %>%
+        mutate(lstart=start-19, lend=start, rstart=end, rend=end+19) %>%
+        mutate(lseq = str_sub(aSeq, lstart, lend)) %>%
+        mutate(rseq = str_sub(aSeq, rstart, rend)) %>%
+        mutate(lnt = map2_dbl(dseq, lseq, max_match_nt, direction=-1)) %>%
+        mutate(rnt = map2_dbl(dseq, rseq, max_match_nt, direction=1))
+    #
+    to = ti3 %>% mutate(l_bp_hom = lnt, r_bp_hom = rnt, bp_hom = pmax(lnt, rnt)) %>%
+        mutate(type=ifelse(bp_hom<=1, 'NHEJ', 'MMEJ')) %>%
+        select(-start,-end,-lstart,-lend,-rstart,-rend,-lseq,-rseq,-lnt,-rnt)
+    #
+    fo = sprintf("%s/%s.txt", diro, pre)
+    write_tsv(to, fo)
+    #}}}
+}
 #}}}
 
+#{{{ set 1
 diri = file.path(dirw, 'MMEJ')
 diro = file.path(dirw, 'MMEJ_out')
 pres = c(
@@ -34,7 +60,9 @@ pres = c(
     "pMG202_ms26_gRNA2",
     "pMG202_ms45_gRNA2"
 )
+#}}}
 
+#{{{ set 2
 diri = file.path(dirw, 'mmej_020720')
 diro = file.path(dirw, 'mmej_020720_out')
 pres = c(
@@ -46,25 +74,12 @@ pres = c(
     "Ms45_gRNA1_trex2_cas9",
     "Ms45_gRNA2_trex2_cas9"
 )
+#}}}
 
-pre = pres[7]
-fi = sprintf("%s/%s.txt", diri, pre)
-ti = read_tsv(fi) %>%
-    rename(aSeq=1,rSeq=2,ref=3,status=4,n_del=5,n_ins=6,n_mut=7,num_reads=8,pct_reads=9)
-ti2 = ti %>%
-    mutate(dpos = map(aSeq, get_longest_del))
-#
-ti3 = ti2 %>% unnest(dpos) %>%
-    mutate(dseq = str_sub(rSeq, start+1, end-1)) %>%
-    mutate(lstart=start-19, lend=start, rstart=end, rend=end+19) %>%
-    mutate(lseq = str_sub(aSeq, lstart, lend)) %>%
-    mutate(rseq = str_sub(aSeq, rstart, rend)) %>%
-    mutate(lnt = map2_dbl(dseq, lseq, max_match_nt, direction=-1)) %>%
-    mutate(rnt = map2_dbl(dseq, rseq, max_match_nt, direction=1))
-#
-to = ti3 %>% mutate(l_bp_hom = lnt, r_bp_hom = rnt, bp_hom = pmax(lnt, rnt)) %>%
-    mutate(type=ifelse(bp_hom<=1, 'NHEJ', 'MMEJ')) %>%
-    select(-start,-end,-lstart,-lend,-rstart,-rend,-lseq,-rseq,-lnt,-rnt)
-#
-fo = sprintf("%s/%s.txt", diro, pre)
-write_tsv(to, fo)
+#{{{ set3
+diri = file.path(dirw, 'mmej_032520')
+diro = file.path(dirw, 'mmej_032520_out')
+pres = sprintf("5907-%d", c(1:5,7:9))
+#}}}
+
+tibble(pre = pres) %>% mutate(x = map(pre, run_mmej_pipe, diri=diri, diro=diro))
