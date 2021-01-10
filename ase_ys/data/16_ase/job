@@ -1,0 +1,16 @@
+#!/bin/bash -l
+#SBATCH -N 1 -n 8 -c 1
+#SBATCH --time=10:00:00
+#SBATCH --mem=40gb
+#SBATCH -p small,amdsmall
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=zhoux379@umn.edu
+#SBATCH -o %x.out
+
+source activate mmm
+echo ${SLURM_JOBID}
+
+cd $misc/ase_ys/src
+
+j=8
+Rscript --no-init-file --no-restore st.16.ase.1.R

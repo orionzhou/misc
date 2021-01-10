@@ -13,6 +13,8 @@ trevor_nhej/*
 *Rplots.pdf
 *.swp
 .panfs*
+*.out
+job.*
 
 # Large data files
 *.gff
